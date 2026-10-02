@@ -1,45 +1,43 @@
 # Thinkific PDF Saver
 
-Save a PDF that is already loaded in a compatible PDF.js viewer. Built for sites that disable PDF downloading, this tool also works on other sites that expose PDFViewerApplication.pdfDocument.
+A small Console tool for saving a PDF that's already open in a PDF.js viewer. It was built for a Thinkific handbook, but isn't tied to a particular course or page count.
 
-## Features
+## Use it
 
-- Download the original PDF, keeping selectable text and links.
-- Export all pages as images in one PDF, in document order.
-- Detect the page count automatically.
-- Show rendering progress and allow cancellation.
-- Run locally in your signed-in browser without external libraries or content uploads.
+1. Open `index.html` for instructions and the Copy script button.
+2. Open your PDF lesson and wait for it to load.
+3. Open Developer Tools, select Console, paste the script, and press Enter.
+4. Choose **Save original PDF** or **Save all pages as images in a PDF**.
 
-## How to use
+If the document isn't found, select the PDF viewer frame in the Console context dropdown and run the script again. Review the script before running it.
 
-1. Open `index.html` locally for instructions and a **Copy script** button, or read `save-pdf.js` directly.
-2. Open your PDF lesson and wait until the document has loaded.
-3. Open Developer Tools (**F12** or **Ctrl + Shift + J**) and select **Console**.
-4. Paste the script and press Enter. Read any browser paste warning and review the code before proceeding.
-5. If the document is not found, choose the PDF viewer iframe from the Console context dropdown (often named `viewer.html`) and run the script again.
-6. In the new panel, choose **Save original PDF**, or **Save all pages as images in a PDF**.
-7. Keep the tab open until finished and check your browser downloads.
+The original preserves text and links. Image export renders all pages in order without scrolling, but has no selectable text or links. Keep the tab open while it runs. Cancel stops the export without saving a partial document.
 
-The image export does not require scrolling through the handbook. It preserves page proportions but loses selectable text and links and may produce a much larger file.
+## Compatibility
 
-## Compatibility and limitations
+The viewer must expose `PDFViewerApplication.pdfDocument`. Cross-origin viewers need their own Console context. Chrome's built-in PDF viewer and other viewer implementations aren't supported.
 
-Requires a loaded PDF.js viewer exposing `PDFViewerApplication.pdfDocument`. Cross-origin frames must be selected through the Console context dropdown. Chrome's built-in PDF viewer and other viewer implementations are unsupported.
+This is intended for desktop browsers with Developer Tools. It doesn't handle login, scrape whole courses, or download DRM-protected documents. Large image exports can use substantial memory.
 
-Desktop browsers with Developer Tools are the intended workflow. This is a Console script, not an extension or a universal downloader. It does not sign in, scrape entire courses, or handle DRM. Large image exports can use substantial memory.
+## Working on the code
 
-The export callbacks and generated PDF structure were checked with a simulated three-page document including mixed page orientations. The authenticated Thinkific lesson has not been tested live.
+- `save-pdf.js`: viewer lookup, save panel, original download, and image PDF export.
+- `page.js` and `style.css`: the instruction page's copy button and styles.
+- `tools/page.html`: the instruction page template.
+- `tools/build_page.py`: embeds the current script in `index.html` so copying also works offline.
 
-## Optional GitHub Pages
+After editing the Console script or page template, rebuild the page:
 
-This repository includes `index.html` at the root. To host the instruction page, open repository **Settings → Pages**, select deployment from the `main` branch and root folder, and save. The hosted page gives instructions and copies the script; run the script on the actual lesson page.
+```sh
+python3 tools/build_page.py
+```
 
-## Files
+There are no external libraries or build dependencies beyond Python for that rebuild. End users can open the included HTML directly.
 
-| File | Purpose |
-| --- | --- |
-| `save-pdf.js` | Script to run in the PDF viewer's Console |
-| `index.html` | Standalone instructions and Copy script button |
-| `README.md` | Repository documentation |
+## GitHub Pages
 
-No course PDFs, credentials, or personal data are included in this repository.
+In repository **Settings → Pages**, deploy from `main` and the root folder. This hosts the instruction page; the Console script still runs on the page containing the PDF.
+
+## Checks
+
+Export callbacks and PDF structure were checked using a simulated three-page document with mixed page orientations. The authenticated Thinkific lesson hasn't been tested live.

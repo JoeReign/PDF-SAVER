@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PDF Saver</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="page.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>PDF Saver</h1>
+      <p>Save a document from a compatible PDF.js viewer. Run the script on the page where your PDF is already open.</p>
+
+      <ol>
+        <li>Open the PDF and wait for a page to appear.</li>
+        <li>Press <kbd>F12</kbd> or <kbd>Ctrl + Shift + J</kbd> and select <strong>Console</strong>.</li>
+        <li>Copy the script below, paste it into Console, and press Enter. Read any paste warning and review the code before proceeding.</li>
+        <li>If the viewer isn't found, change the Console context from <strong>top</strong> to the PDF viewer frame, often named <code>viewer.html</code>, and run it again.</li>
+        <li>Choose <strong>Save original PDF</strong> or <strong>Save all pages as images in a PDF</strong> in the new panel.</li>
+      </ol>
+
+      <button id="copy" type="button">Copy script</button>
+      <p id="status" role="status"></p>
+      <label for="code">Console script</label>
+      <textarea id="code" readonly spellcheck="false">{{SCRIPT}}</textarea>
+
+      <h2>Which option?</h2>
+      <p>The original PDF keeps text and links. The image option renders every page in order without scrolling, but loses selectable text and links. Large documents can take time and use a lot of memory. Keep the tab open until it finishes.</p>
+      <p>This works with viewers exposing <code>PDFViewerApplication.pdfDocument</code>. Chrome's built-in PDF viewer and other viewer types aren't supported.</p>
+    </main>
+  </body>
+</html>
