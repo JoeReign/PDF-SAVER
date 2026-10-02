@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Handbook PDF Saver</title><style>body{font:17px/1.65 system-ui;max-width:820px;margin:40px auto;padding:20px;color:#152345;background:#f4f7ff}textarea{width:100%;height:180px}button{padding:12px 20px;background:#2946bf;color:white;border:0;border-radius:6px;font:inherit}li{margin:12px 0}</style><h1>Handbook PDF Saver</h1><p>Run this in your signed-in Thinkific lesson to save the loaded handbook. No installation, password entry, or external libraries needed. The script adds a small save panel and requests a local download.</p><ol><li>Open your Python Handbook lesson and wait until a PDF page appears.</li><li>Open Developer Tools with <b>F12</b> or <b>Ctrl + Shift + J</b>, then select <b>Console</b>.</li><li>Click Copy script below, paste into Console, and press Enter. Chrome may restrict pasting: read its warning and only proceed if you understand the code. You can inspect the script in the box or the included JS file.</li><li>If it says no document was found, use Console’s context dropdown (usually labeled <b>top</b>) to select the PDF viewer iframe, often named viewer.html. Paste and run again.</li><li>Click <b>Save original PDF</b> in the new panel. If that fails, try <b>Save all pages as images in a PDF</b>. Keep the tab open until finished.</li></ol><p>The image option renders every page from the loaded document, in order, without needing to scroll. It preserves page proportions but has no selectable text or links, and can use substantial memory. Cancel stops rendering; it never saves a partial PDF.</p><button id="copy">Copy script</button><p id="status"></p><textarea id="code" readonly>(async () =&gt; {
+  &#x27;use strict&#x27;;
+  const findViewer = (win, depth = 0) =&gt; {
+    try {
+      if (win.PDFViewerApplication?.pdfDocument) return win;
+      if (depth &lt; 5) for (let i = 0; i &lt; win.frames.length; i++) {
+        const match = findViewer(win.frames[i], depth + 1);
+        if (match) return match;
+      }
+    } catch (_) { /* Cross-origin frames require selecting their Console context. */ }
+    return null;
+  };
+  const win = findViewer(window);
+  if (!win) {
+    alert(&#x27;No loaded PDF.js document found. Wait for the handbook to load. In DevTools Console, change the context dropdown from “top” to the PDF viewer frame, then run this script again.&#x27;);
+    return;
+  }
+  const doc = win.PDFViewerApplication.pdfDocument;
+  const dom = win.document;
+  const id = &#x27;handbook-save-panel&#x27;;
+  if (dom.getElementById(id)) { dom.getElementById(id).scrollIntoView(); return; }
+  const panel = dom.createElement(&#x27;section&#x27;);
+  panel.id = id;
+  panel.style.cssText = &#x27;position:fixed;top:55px;right:20px;z-index:2147483647;background:#fff;color:#14213d;padding:20px;border:2px solid #2946bf;border-radius:12px;box-shadow:0 8px 40px #0007;width:310px;font:14px/1.5 system-ui;text-align:left&#x27;;
+  const title = dom.createElement(&#x27;strong&#x27;);
+  title.textContent = `Save handbook · ${doc.numPages} pages`;
+  const status = dom.createElement(&#x27;p&#x27;);
+  status.textContent = &#x27;Choose original PDF for selectable text and links. Page images create a larger PDF without selectable text.&#x27;;
+  panel.append(title, status);
+  const button = (label, action) =&gt; {
+    const b = dom.createElement(&#x27;button&#x27;); b.textContent = label;
+    b.style.cssText = &#x27;display:block;width:100%;margin-top:8px;padding:9px;border:1px solid #2946bf;border-radius:6px;background:#eff3ff;color:#14213d;cursor:pointer;font:inherit&#x27;;
+    b.onclick = action; panel.append(b); return b;
+  };
+  let cancelled = false, busy = false, activeRender = null;
+  const download = (blob, name) =&gt; {
+    const url = win.URL.createObjectURL(blob), a = dom.createElement(&#x27;a&#x27;);
+    a.href = url; a.download = name; dom.body.append(a); a.click(); a.remove();
+    win.setTimeout(() =&gt; win.URL.revokeObjectURL(url), 60000);
+  };
+  const safeName = (dom.title || &#x27;Python Handbook&#x27;).replace(/[\\/:*?&quot;&lt;&gt;|]/g, &#x27;-&#x27;).slice(0, 100).replace(/\.pdf$/i, &#x27;&#x27;);
+  const run = async (action) =&gt; {
+    if (busy) return;
+    busy = true; cancelled = false; original.disabled = images.disabled = true;
+    try { await action(); }
+    catch (e) { status.textContent = cancelled ? &#x27;Cancelled. No partial PDF saved.&#x27; : `Could not save: ${e.message}. Try the other option, or select the PDF frame in Console.`; }
+    finally { busy = false; activeRender = null; original.disabled = images.disabled = false; }
+  };
+  const original = button(&#x27;Save original PDF&#x27;, () =&gt; run(async () =&gt; {
+    status.textContent = &#x27;Collecting the complete PDF…&#x27;;
+    const bytes = await doc.getData();
+    if (cancelled) return;
+    if (bytes.length &lt; 5 || String.fromCharCode(...bytes.slice(0, 5)) !== &#x27;%PDF-&#x27;) throw new Error(&#x27;The viewer returned invalid PDF data&#x27;);
+    download(new Blob([bytes], {type:&#x27;application/pdf&#x27;}), safeName + &#x27;.pdf&#x27;);
+    status.textContent = `Download requested: original PDF, ${doc.numPages} pages. Check your browser downloads.`;
+  }));
+  const images = button(&#x27;Save all pages as images in a PDF&#x27;, () =&gt; run(async () =&gt; {
+    const parts = [], offsets = [0], encoder = new TextEncoder(); let length = 0;
+    const put = data =&gt; { const bytes = typeof data === &#x27;string&#x27; ? encoder.encode(data) : data; parts.push(bytes); length += bytes.length; };
+    const object = (id, body, stream) =&gt; {
+      offsets[id] = length; put(`${id} 0 obj\n${body}\n`);
+      if (stream) { put(&#x27;stream\n&#x27;); put(stream); put(&#x27;\nendstream\n&#x27;); }
+      put(&#x27;endobj\n&#x27;);
+    };
+    put(&#x27;%PDF-1.4\n&#x27;);
+    object(1, &#x27;&lt;&lt; /Type /Catalog /Pages 2 0 R &gt;&gt;&#x27;);
+    object(2, `&lt;&lt; /Type /Pages /Count ${doc.numPages} /Kids [${Array.from({length:doc.numPages}, (_,i)=&gt;`${3+i*3} 0 R`).join(&#x27; &#x27;)}] &gt;&gt;`);
+    for (let n = 1; n &lt;= doc.numPages; n++) {
+      if (cancelled) throw new Error(&#x27;Cancelled&#x27;);
+      status.textContent = `Rendering page ${n} of ${doc.numPages}… Keep this tab open.`;
+      const page = await doc.getPage(n), base = page.getViewport({scale:1});
+      const viewport = page.getViewport({scale:Math.min(2, 2400 / Math.max(base.width, base.height))});
+      const canvas = dom.createElement(&#x27;canvas&#x27;); canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+      try {
+        activeRender = page.render({canvasContext:canvas.getContext(&#x27;2d&#x27;), viewport, background:&#x27;rgb(255,255,255)&#x27;});
+        await activeRender.promise; activeRender = null;
+        if (cancelled) throw new Error(&#x27;Cancelled&#x27;);
+        const blob = await new Promise(resolve =&gt; canvas.toBlob(resolve, &#x27;image/jpeg&#x27;, .92));
+        if (!blob) throw new Error(&#x27;Image encoding failed&#x27;);
+        const jpeg = new Uint8Array(await blob.arrayBuffer()), p = 3+(n-1)*3;
+        object(p, `&lt;&lt; /Type /Page /Parent 2 0 R /MediaBox [0 0 ${base.width} ${base.height}] /Resources &lt;&lt; /XObject &lt;&lt; /Im ${p+1} 0 R &gt;&gt; &gt;&gt; /Contents ${p+2} 0 R &gt;&gt;`);
+        object(p+1, `&lt;&lt; /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} &gt;&gt;`, jpeg);
+        const commands = encoder.encode(`q\n${base.width} 0 0 ${base.height} 0 0 cm\n/Im Do\nQ\n`);
+        object(p+2, `&lt;&lt; /Length ${commands.length} &gt;&gt;`, commands);
+      } finally { canvas.width = canvas.height = 0; }
+      await new Promise(resolve =&gt; win.setTimeout(resolve, 0));
+    }
+    if (cancelled) throw new Error(&#x27;Cancelled&#x27;);
+    const xref = length;
+    put(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
+    for (let i = 1; i &lt; offsets.length; i++) put(`${String(offsets[i]).padStart(10,&#x27;0&#x27;)} 00000 n \n`);
+    put(`trailer\n&lt;&lt; /Size ${offsets.length} /Root 1 0 R &gt;&gt;\nstartxref\n${xref}\n%%EOF\n`);
+    download(new Blob(parts, {type:&#x27;application/pdf&#x27;}), safeName + &#x27;-page-images.pdf&#x27;);
+    status.textContent = `Download requested: ${doc.numPages} page images. Check your browser downloads.`;
+  }));
+  button(&#x27;Cancel / Close&#x27;, () =&gt; { if (busy) { cancelled = true; activeRender?.cancel(); status.textContent = &#x27;Cancelling…&#x27;; } else panel.remove(); });
+  dom.body.append(panel);
+})();
+</textarea><p>Compatibility: viewers exposing PDFViewerApplication.pdfDocument. The screenshot resembles this viewer, but the signed-in lesson has not been tested. If no viewer frame works, send a screenshot of the Console context dropdown and the error message.</p><script>document.getElementById('copy').onclick=async()=>{const t=document.getElementById('code');try{await navigator.clipboard.writeText(t.value);document.getElementById('status').textContent='Copied. Paste into the lesson’s Console.'}catch(e){t.focus();t.select();document.getElementById('status').textContent='Press Ctrl+C to copy the selected script.'}};</script></html>
