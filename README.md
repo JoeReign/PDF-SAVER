@@ -2,6 +2,7 @@
 
 Save a PDF that is already loaded in a compatible PDF.js viewer. Built for sites that disable PDF downloading, this tool also works on other sites that expose PDFViewerApplication.pdfDocument.
 
+index.html page address: https://joereign.github.io/PDF-SAVER/
 ## Use it
 
 1. Open `index.html` for instructions and the Copy script button.
