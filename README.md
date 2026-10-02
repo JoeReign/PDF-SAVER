@@ -1,6 +1,6 @@
 # Thinkific PDF Saver
 
-A small Console tool for saving a PDF that's already open in a PDF.js viewer. It was built for a Thinkific handbook, but isn't tied to a particular course or page count.
+Save a PDF that is already loaded in a compatible PDF.js viewer. Built for sites that disable PDF downloading, this tool also works on other sites that expose PDFViewerApplication.pdfDocument.
 
 ## Use it
 
