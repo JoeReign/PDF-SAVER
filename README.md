@@ -1,4 +1,4 @@
-# Thinkific PDF Saver
+#PDF Saver
 
 Save a PDF that is already loaded in a compatible PDF.js viewer. Built for sites that disable PDF downloading, this tool also works on other sites that expose PDFViewerApplication.pdfDocument.
 
