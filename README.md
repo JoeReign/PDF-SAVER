@@ -1,6 +1,6 @@
 # Thinkific PDF Saver
 
-Save a PDF already loaded in a compatible PDF.js viewer. Built for a Thinkific handbook viewer; it can also work on other sites exposing `PDFViewerApplication.pdfDocument`.
+Save a PDF that is already loaded in a compatible PDF.js viewer. Built for sites that disable PDF downloading, this tool also works on other sites that expose PDFViewerApplication.pdfDocument.
 
 ## Features
 
