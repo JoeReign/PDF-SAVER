@@ -35,10 +35,3 @@ python3 tools/build_page.py
 
 There are no external libraries or build dependencies beyond Python for that rebuild. End users can open the included HTML directly.
 
-## GitHub Pages
-
-In repository **Settings → Pages**, deploy from `main` and the root folder. This hosts the instruction page; the Console script still runs on the page containing the PDF.
-
-## Checks
-
-Export callbacks and PDF structure were checked using a simulated three-page document with mixed page orientations. The authenticated Thinkific lesson hasn't been tested live.
